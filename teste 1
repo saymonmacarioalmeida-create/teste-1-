@@ -1,0 +1,100 @@
+--[[
+╔══════════════════════════════════════════════════════╗
+║              XITS ON TOP  v1.0.0                     ║
+║   Training & Testing Panel — Roblox Studio Only      ║
+║                                                      ║
+║   Install → StarterPlayerScripts (LocalScript)       ║
+║   Requisito → Experiência própria no Roblox Studio   ║
+╚══════════════════════════════════════════════════════╝
+
+Módulos:
+  Config   → todas as configurações + estado global
+  UI       → painel, navegação, componentes reutilizáveis
+  ESP      → Box / Name / Health / Distance / Skeleton / Tracer
+  Aim      → treinamento de mira (FOV visual, suavização, seleção de osso)
+  Keybinds → atalhos de teclado
+
+Atalhos padrão:
+  INSERT   → abrir / fechar painel
+  F1       → ativar / desativar ESP
+  F2       → ativar / desativar Aim
+
+Notas técnicas:
+  • ESP usa Frames como linhas via rotação (sem Drawing API — funciona em LocalScript normal)
+  • Aim usa CameraType.Scriptable enquanto ativo; restaura Custom ao desligar
+  • Nenhum mecanismo de invasão ou exploit — apenas APIs públicas do Roblox
+]]
+
+---@diagnostic disable: undefined-global
+
+-- ══════════════════════════════════════════════════════════════════════════════
+--  SERVICES
+-- ══════════════════════════════════════════════════════════════════════════════
+local Players          = game:GetService("Players")
+local RunService       = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService     = game:GetService("TweenService")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")
+local Camera      = workspace.CurrentCamera
+
+-- ══════════════════════════════════════════════════════════════════════════════
+--  CONFIG — estado global + defaults
+-- ══════════════════════════════════════════════════════════════════════════════
+local Config = {
+    version = "1.0.0",
+
+    esp = {
+        enabled       = false,
+        box           = true,
+        boxColor      = Color3.fromRGB(220, 30, 30),
+        name          = true,
+        nameColor     = Color3.fromRGB(255, 255, 255),
+        health        = true,
+        skeleton      = false,
+        skeletonColor = Color3.fromRGB(220, 30, 30),
+        tracer        = false,
+        tracerColor   = Color3.fromRGB(220, 30, 30),
+        distance      = true,
+        distanceColor = Color3.fromRGB(160, 160, 190),
+        maxDistance   = 500,
+        lineThickness = 1.5,
+    },
+
+    aim = {
+        enabled    = false,
+        smoothness = 0.15,     -- 0.01 (abrupto) → 1.0 (instantâneo)
+        fov        = 120,      -- raio em pixels
+        showFov    = true,
+        target      = "Head",   -- Head | UpperTorso | HumanoidRootPart
+        visibleOnly = true,     -- ignorar alvos atrás de paredes (raycast)
+        fovColor    = Color3.fromRGB(220, 30, 30),
+    },
+
+    keys = {
+        togglePanel = Enum.KeyCode.Insert,
+        toggleESP   = Enum.KeyCode.F1,
+        toggleAim   = Enum.KeyCode.F2,
+    },
+
+    -- paleta de cores da interface
+    ui = {
+        accent      = Color3.fromRGB(220, 30, 30),
+        bg          = Color3.fromRGB(11, 11, 14),
+        bgSecondary = Color3.fromRGB(17, 17, 21),
+        panel       = Color3.fromRGB(22, 22, 28),
+        text        = Color3.fromRGB(238, 238, 245),
+        muted       = Color3.fromRGB(95, 95, 112),
+        border      = Color3.fromRGB(36, 36, 48),
+    },
+
+    activeProfile = "Default",
+}
+
+-- perfis em memória (para persistência usar DataStore em jogo publicado)
+local Profiles = {
+    Default    = {},
+    Aggressive = {},
+    Passive    = {},
+    Custom     = {},... (31 KB restante(s))
